@@ -1,31 +1,35 @@
-const plugin = require('tailwindcss/plugin')
-
+const plugin = require('tailwindcss/plugin');
 
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   corePlugins: {
-    container : false
+    container: false,
   },
   theme: {
     extend: {
-      colors:{
-        orange : '#ee4d2d'
-      }
+      colors: {
+        orange: '#ee4d2d',
+      },
     },
   },
   plugins: [
-    plugin(function({ addComponents ,theme}) {
+    plugin(function ({ addComponents, theme }) {
       addComponents({
         '.container': {
-           maxWith:  theme('columns.7xl'),
-           marginLeft : 'auto',
-           marginRight: 'auto',
-           paddingLeft: theme('spacing.4'),
-           paddingRight: theme('spacing.4'),
-        },  
-      })
-    })
+          maxWidth: theme('spacing.7xl'), // chỉnh sửa đúng theme của bạn
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          paddingLeft: theme('spacing.4'),
+          paddingRight: theme('spacing.4'),
+        },
+        // '.line-clamp-2': {
+        //   display: '-webkit-box',
+        //   '-webkit-line-clamp': '2',
+        //   '-webkit-box-orient': 'vertical',
+        //   overflow: 'hidden',
+        // },
+      });
+    }),
   ],
-}
-
+};

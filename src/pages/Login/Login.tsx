@@ -3,14 +3,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { loginAccount } from "src/apis/auth.api";
+import authApi from "src/apis/auth.api";
 import Button from "src/components/Button";
 import Input from "src/components/Input";
 import { AppContext } from "src/contexts/app.context";
 import { SuccesRessponse } from "src/types/ultils.type";
 import { schema, Schema } from "src/utils/rules";
 import { isAxiosUnprocessableEntityError } from "src/utils/ultils";
-
 
 type FormData = Omit<Schema, 'confirm_password'>
 
@@ -29,15 +28,15 @@ export default function Login() {
   })
 
   const logintMutatuin = useMutation({
-    mutationFn: (body: Omit<FormData, 'confirm_password'>) => loginAccount(body)
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.loginAccount(body)
   })
 
   const onSubmit = handleSubmit((data) => {
-
     logintMutatuin.mutate(data, {
       onSuccess: (data) => {
         console.log(data)
         setIsAuthenticated(true)
+        console.log("-----------"+data.data.data.user.email)
         setProfile(data.data.data.user)
         navigate('/')
       },
@@ -59,9 +58,6 @@ export default function Login() {
     })
   })
 
-
-
-
   return (
     <div className='bg-orange'>
       <div className='container'>
@@ -75,7 +71,6 @@ export default function Login() {
                 type='email'
                 className='mt-8'
                 errorMessage={errors.email?.message}
-              // rules={rules.email}
               />
               <Input
                 name='password'
@@ -83,14 +78,18 @@ export default function Login() {
                 type='password'
                 className='mt-8'
                 errorMessage={errors.password?.message}
-                // rules={rules.password}
                 placeholder='Password'
-                autoComplte='on'
+            
               />
               <div className='mt-3'>
-                <Button type="submit" className='w-full text-center py-4 uppercase bg-red-500 text-white text-sm flex justify-center items-center' isLoading={logintMutatuin.isPending}
-
-                  disabled={logintMutatuin.isPending}>Đăng Nhập</Button>
+                <Button 
+                  type="submit" 
+                  className='w-full text-center py-4 uppercase bg-red-500 text-white text-sm flex justify-center items-center' 
+                  isLoading={logintMutatuin.isPending}
+                  disabled={logintMutatuin.isPending}
+                >
+                  Đăng Nhập
+                </Button>
               </div>
               <div className='mt-8 '>
                 <div className='flex items-center text-center justify-center'>

@@ -51,7 +51,7 @@ export default function useRouteElement() {
       children: [
         {
           path: path.login,
-          element: (
+        element: (
             <RegisterLayout>
               <Login />
             </RegisterLayout>

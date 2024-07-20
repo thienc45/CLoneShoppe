@@ -4,7 +4,7 @@ import { omit } from 'lodash'
 import { useContext } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
-import { registerAccount } from 'src/apis/auth.api'
+import authApi from 'src/apis/auth.api'
 import Button from 'src/components/Button'
 import Input from 'src/components/Input'
 import { AppContext } from 'src/contexts/app.context'
@@ -31,7 +31,7 @@ export default function Register() {
   // const rules = getRules(getValues)
 
   const registerAccountMutatuin = useMutation({
-    mutationFn: (body: Omit<FormData, 'confirm_password'>) => registerAccount(body)
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.registerAccount(body)
   })
 
   const onSubmit = handleSubmit((data) => {
@@ -96,7 +96,7 @@ export default function Register() {
                 errorMessage={errors.password?.message}
                 // rules={rules.password}
                 placeholder='Password'
-                autoComplte='on'
+          
               />
               <Input
                 name='confirm_password'
@@ -106,7 +106,7 @@ export default function Register() {
                 errorMessage={errors.confirm_password?.message}
                 // rules={rules.confirm_password}
                 placeholder='Confirm Password'
-                autoComplte='on'
+       
               />
               <div className='mt-3'>
                 <Button
