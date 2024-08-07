@@ -37,6 +37,8 @@ export default function Header() {
       setIsAuthenticated(false);
       setProfile(profile)
       localStorage.removeItem('profile')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('token')
       queryClient.removeQueries({ queryKey: ['purchases', { status: purchasesStatus.inCart }] })
     },
     onError: (error: any) => {
