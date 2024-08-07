@@ -5,6 +5,7 @@ import { Controller, Resolver, useForm } from 'react-hook-form'
 import { Link, createSearchParams, useNavigate } from 'react-router-dom'
 import Button from 'src/components/Button'
 import InputNumber from 'src/components/InputNumber'
+import InputV2 from 'src/components/InputV2'
 import RatingStars from 'src/components/RatingStars'
 import path from 'src/constants/path'
 import { QueryConfig } from 'src/hooks/useQueryConfig'
@@ -23,7 +24,6 @@ type FormData = {
 
 const priceSchema = schema.pick(['price_min', 'price_max'])
 
-
 export default function AsideFilter({ queryConfig, categories }: Props) {
   const { category } = queryConfig
   const {
@@ -40,7 +40,6 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
     resolver: yupResolver(priceSchema) as Resolver<FormData>
   })
 
-
   const navigate = useNavigate()
   const valueForm = watch()
   console.log(errors)
@@ -53,18 +52,20 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
         price_min: data.price_min
       }).toString()
     })
-
   })
 
   const handleRemoveAll = () => {
     navigate({
       pathname: path.home,
-      search: createSearchParams(omit({
-        ...queryConfig,
-
-      }, ['price_max', 'price_min', 'rating', 'rating_filter', 'category'])).toString()
+      search: createSearchParams(
+        omit(
+          {
+            ...queryConfig
+          },
+          ['price_max', 'price_min', 'rating', 'rating_filter', 'category']
+        )
+      ).toString()
     })
-
   }
 
   return (
@@ -153,7 +154,7 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
                       type='text'
                       placeholder='Từ'
                       classNameInput='p-1 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm'
-                      onChange={event => {
+                      onChange={(event) => {
                         field.onChange(event)
                         trigger('price_max')
                       }}
@@ -163,6 +164,19 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
                     />
                   )}
                 />
+                
+                {/* <InputV2 control={control
+                } name='price_min' type='text'
+                  placeholder='Từ'
+                  classNameInput='p-1 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm'
+                  onChange={() => {
+
+                    trigger('price_max')
+                  }}
+
+                  classNameError='hidden'
+                /> */}
+
                 <div className='mx-2 mt-2 shink-0'>-</div>
                 <Controller
                   control={control}
@@ -172,7 +186,7 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
                       type='text'
                       placeholder='Đến'
                       classNameInput='p-1 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm'
-                      onChange={event => {
+                      onChange={(event) => {
                         field.onChange(event)
                         trigger('price_min')
                       }}
@@ -183,15 +197,22 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
                   )}
                 />
               </div>
-              <div className="mt-1 text-red-600 min-h-[1.25rem] text-sm text-center">{errors.price_min?.message}</div>
-              <Button type='submit' className='w-full p-2 uppercase bg-orange text-white text-sm hover:bg-orange 80 flex justify-center items-center'>
+              <div className='mt-1 text-red-600 min-h-[1.25rem] text-sm text-center'>{errors.price_min?.message}</div>
+              <Button
+                type='submit'
+                className='w-full p-2 uppercase bg-orange text-white text-sm hover:bg-orange 80 flex justify-center items-center'
+              >
                 Áp dụng
               </Button>
             </form>
           </div>
           <div className='bg-gray-300 h-[1px] my-4'>
             <RatingStars queryConfig={queryConfig} />
-            <Button onClick={handleRemoveAll} type='submit' className='w-full p-2 uppercase bg-orange text-white text-sm hover:bg-orange 80 flex justify-center items-center'>
+            <Button
+              onClick={handleRemoveAll}
+              type='submit'
+              className='w-full p-2 uppercase bg-orange text-white text-sm hover:bg-orange 80 flex justify-center items-center'
+            >
               Xóa tất cả
             </Button>
           </div>

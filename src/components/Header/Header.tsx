@@ -1,29 +1,82 @@
-import { useMutation } from '@tanstack/react-query';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { omit } from 'lodash';
 import { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { createSearchParams, Link, useNavigate } from 'react-router-dom';
 import authApi from 'src/apis/auth.api';
+import purchaseApi from 'src/apis/purchase.api';
 import path from 'src/constants/path';
+import { purchasesStatus } from 'src/constants/purchase';
 import { AppContext } from 'src/contexts/app.context';
+import useQueryConfig from 'src/hooks/useQueryConfig';
+import { queryClient } from 'src/main';
+import { Purchase } from 'src/types/purchase.type';
+import { schema, Schema } from 'src/utils/rules';
+import { formatCurrency } from 'src/utils/ultils';
 import Popover from '../Poppover/Poppover';
 
+
+type FormData = Pick<Schema, 'name'>
+const nameSchema = schema.pick(['name'])
+
 export default function Header() {
-  const { setIsAuthenticated, isAuthenticated, setProfile ,profile} = useContext(AppContext)
+  const queryConfig = useQueryConfig()
+
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      name: ''
+    }, resolver: yupResolver(nameSchema)
+  })
+
+
+  const { setIsAuthenticated, isAuthenticated, setProfile, profile } = useContext(AppContext)
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
-      console.log(profile?.email)
       setIsAuthenticated(false);
       setProfile(profile)
+      localStorage.removeItem('profile')
+      queryClient.removeQueries({ queryKey: ['purchases', { status: purchasesStatus.inCart }] })
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Logout failed:', error);
     }
   });
-  
+
 
   const handleLogout = () => {
     logoutMutation.mutate()
   }
+
+  const navigate = useNavigate()
+  const onSubmitSearch = handleSubmit(data => {
+    const config = queryConfig.order ? omit(
+      {
+        ...queryConfig,
+        name: data.name
+      },
+      ['order', 'sort_by']
+    ) : {
+      ...queryConfig,
+      name: data.name
+    }
+    navigate({
+      pathname: path.home,
+      search: createSearchParams(
+        config
+      ).toString()
+    })
+  })
+
+  const { data: purchasesInCartData } = useQuery({
+    queryKey: ['purchases', { status: purchasesStatus.inCart }],
+    queryFn: () => purchaseApi.getPurchases({ status: purchasesStatus.inCart }),
+    enabled: isAuthenticated
+  })
+
+  const purchasesInCart = purchasesInCartData?.data.data
+
   return (
     <div className='pb-5 pt-2 bg-orange bg-[linear-gradient(-180deg,#f53d2d,#f63)} orange'>
       <div className='container max-w-[1280px]'>
@@ -106,11 +159,7 @@ export default function Header() {
             <Link to={path.register} className='block py-3 px-4 hover:bg-slate-100'>
               Register
             </Link>
-
-
           </div>)}
-
-
         </div>
 
 
@@ -123,13 +172,13 @@ export default function Header() {
             </svg>
           </Link>
 
-
-          <form action='' className='col-span-8'>
+          <form action='' onSubmit={onSubmitSearch} className='col-span-8'>
             <div className='bg-white rounded-sm p-1 flex'>
               <input
                 type='text'
                 className='text-black py-2 flex-grow border-none outline-none bg-transparent'
-                name='seach'
+                // name='seach'
+                {...register('name')}
               />
               <button className='rounded-sm py-2 px-6 flex-shrink-0 bg-orange'>
                 <svg
@@ -153,85 +202,34 @@ export default function Header() {
             <Popover
               renderPopover={
                 <div className='relative bg-white rounded-sm p-2 max-w-80'>
-                  <div className="text-gray-400 capitalize">
-                    Sản phẩm mới thêm
-                  </div>
-                  <div className="mt-5">
-                    <div className="mt-4 flex">
-                      <div className="flex-shrink-0">
-                        <img src="https://down-vn.img.susercontent.com/file/vn-11134207-7qukw-lggrnigptpwq66_tn" alt="" className='h-11 w-11 object-cover' />
+                  {purchasesInCart ? (
+                    <>
+                      <div className="text-gray-400 capitalize">
+                        Sản phẩm mới thêm
                       </div>
-                      <div className="flex-grow ml-2 overflow-hidden">
-                        <div className="truncate">Thông thường, với đề viết đoạn văn các em chỉ cần viết từ 3-7 dòng.
-                          Cấu tạo của đoạn văn: Cũng giống như một bài văn cần có 3 phần: Mở bài, Thân bài và Kết bài, khi viết</div>
+                      <div className="mt-5">
+                        {purchasesInCart.slice(0, 5).map((purchase: Purchase) => (<div className="mt-2 py-2 flex  flex  hover:bg-gray-100" key={purchase._id}>
+                          <div className="flex-shrink-0 ">
+                            <img src={purchase.product.image} alt={purchase.product.name} className="h-11 w-11 object-cover" />
+                          </div>
+                          <div className="flex-grow ml-2 overflow-hidden">
+                            <div className="truncate">Thông thường, với đề viết đoạn văn các em chỉ cần viết từ 3-7 dòng. Cấu tạo của đoạn văn: Cũng giống như một bài văn cần có 3 phần: Mở bài, Thân bài và Kết bài, khi viết</div>
+                          </div>
+                          <div className="ml-2 flex-shrink-0">
+                            <span className="text-orange">{formatCurrency(purchase.price)}</span>
+                          </div>
+                        </div>))}
                       </div>
-                      <div className="ml-2 flex-shrink-0">
-                        <span className='text-orange'>12345$</span>
-                      </div>
+                    </>
+                  ) : (
+                    <div className="p-2">
+                      <img src="https://th.bing.com/th/id/R.584ed8d178a31a971cc916212f2fd4a4?rik=YkRPf0YxMRLB8Q&pid=ImgRaw&r=0" alt="No purchases in cart" />
                     </div>
-                  </div>
-                  <div className="mt-5">
-                    <div className="mt-4 flex">
-                      <div className="flex-shrink-0">
-                        <img src="https://down-vn.img.susercontent.com/file/vn-11134207-7qukw-lggrnigptpwq66_tn" alt="" className='h-11 w-11 object-cover' />
-                      </div>
-                      <div className="flex-grow ml-2 overflow-hidden">
-                        <div className="truncate">Thông thường, với đề viết đoạn văn các em chỉ cần viết từ 3-7 dòng.
-                          Cấu tạo của đoạn văn: Cũng giống như một bài văn cần có 3 phần: Mở bài, Thân bài và Kết bài, khi viết</div>
-                      </div>
-                      <div className="ml-2 flex-shrink-0">
-                        <span className='text-orange'>12345$</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-5">
-                    <div className="mt-4 flex">
-                      <div className="flex-shrink-0">
-                        <img src="https://down-vn.img.susercontent.com/file/vn-11134207-7qukw-lggrnigptpwq66_tn" alt="" className='h-11 w-11 object-cover' />
+                  )}
 
-                      </div>
-                      <div className="flex-grow ml-2 overflow-hidden">
-                        <div className="truncate">Thông thường, với đề viết đoạn văn các em chỉ cần viết từ 3-7 dòng.
-                          Cấu tạo của đoạn văn: Cũng giống như một bài văn cần có 3 phần: Mở bài, Thân bài và Kết bài, khi viết</div>
-                      </div>
-                      <div className="ml-2 flex-shrink-0">
-                        <span className='text-orange'>12345$</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-5">
-                    <div className="mt-4 flex">
-                      <div className="flex-shrink-0">
-                        <img src="https://down-vn.img.susercontent.com/file/vn-11134207-7qukw-lggrnigptpwq66_tn" alt="" className='h-11 w-11 object-cover' />
-
-                      </div>
-                      <div className="flex-grow ml-2 overflow-hidden">
-                        <div className="truncate">Thông thường, với đề viết đoạn văn các em chỉ cần viết từ 3-7 dòng.
-                          Cấu tạo của đoạn văn: Cũng giống như một bài văn cần có 3 phần: Mở bài, Thân bài và Kết bài, khi viết</div>
-                      </div>
-                      <div className="ml-2 flex-shrink-0">
-                        <span className='text-orange'>12345$</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-5">
-                    <div className="mt-4 flex">
-                      <div className="flex-shrink-0">
-                        <img src="https://down-vn.img.susercontent.com/file/vn-11134207-7qukw-lggrnigptpwq66_tn" alt="" className='h-11 w-11 object-cover' />
-
-                      </div>
-                      <div className="flex-grow ml-2 overflow-hidden">
-                        <div className="truncate">Thông thường, với đề viết đoạn văn các em chỉ cần viết từ 3-7 dòng.
-                          Cấu tạo của đoạn văn: Cũng giống như một bài văn cần có 3 phần: Mở bài, Thân bài và Kết bài, khi viết</div>
-                      </div>
-                      <div className="ml-2 flex-shrink-0">
-                        <span className='text-orange'>12345$</span>
-                      </div>
-                    </div>
-                  </div>
                   <div className="flex mt-6 items-center justify-between">
                     <div className="capitalize text-xs">Thêm vào giỏ hàng</div>
-                    <button className='capitalize bg-orange hover:bg-opacity-80 py-2 px-4 rounded-sm text-white'>Xem giỏ hàng</button>
+                    <Link to='/card' className='capitalize bg-orange hover:bg-opacity-80 py-2 px-4 rounded-sm text-white'>Xem giỏ hàng</Link>
                   </div>
                 </div>
               }

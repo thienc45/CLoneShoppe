@@ -25,10 +25,11 @@ const InputNumber = forwardRef<HTMLInputElement, InputNumberProps>(function Inpu
     if (/^\d+$/.test(value) || value === '') {
       // Thực thi onChange callback từ bên ngoài truyền vào props
       onChange && onChange(event)
-      // Cập nhật localValue state
+      //   Cập nhật localValue state
       setLocalValue(value)
     }
   }
+
   return (
     <div className={className}>
       <input

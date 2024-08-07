@@ -1,52 +1,50 @@
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation } from "@tanstack/react-query";
-import { useContext } from "react";
-import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import authApi from "src/apis/auth.api";
-import Button from "src/components/Button";
-import Input from "src/components/Input";
-import { AppContext } from "src/contexts/app.context";
-import { SuccesRessponse } from "src/types/ultils.type";
-import { schema, Schema } from "src/utils/rules";
-import { isAxiosUnprocessableEntityError } from "src/utils/ultils";
+import { useForm } from 'react-hook-form'
+import { ErrorResponse, Link, useNavigate } from 'react-router-dom'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { schema, Schema } from 'src/utils/rules'
+import { useMutation } from '@tanstack/react-query'
+import authApi from 'src/apis/auth.api'
 
-type FormData = Omit<Schema, 'confirm_password'>
+import Input from 'src/components/Input'
+import { useContext } from 'react'
+import { AppContext } from 'src/contexts/app.context'
+import Button from 'src/components/Button'
+import { isAxiosUnprocessableEntityError } from 'src/utils/ultils'
+import { ErrorRessponse } from 'src/types/ultils.type'
+// import { Helmet } from 'react-helmet-async';
 
-const loginSchema = schema.omit(['confirm_password'])
+
+
+type FormData = Pick<Schema, 'email' | 'password'>
+const loginSchema = schema.pick(['email', 'password'])
+
 export default function Login() {
   const { setIsAuthenticated, setProfile } = useContext(AppContext)
   const navigate = useNavigate()
   const {
     register,
-    handleSubmit,
-    getValues,
     setError,
+    handleSubmit,
     formState: { errors }
   } = useForm<FormData>({
     resolver: yupResolver(loginSchema)
   })
 
-  const logintMutatuin = useMutation({
+  const loginMutation = useMutation({
     mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.loginAccount(body)
   })
-
   const onSubmit = handleSubmit((data) => {
-    logintMutatuin.mutate(data, {
+    loginMutation.mutate(data, {
       onSuccess: (data) => {
-        console.log(data)
         setIsAuthenticated(true)
-        console.log("-----------"+data.data.data.user.email)
         setProfile(data.data.data.user)
         navigate('/')
       },
       onError: (error) => {
-        console.log(error)
-        if (isAxiosUnprocessableEntityError<SuccesRessponse<FormData>>(error)) {
+        if (isAxiosUnprocessableEntityError<ErrorRessponse<FormData>>(error)) {
           const formError = error.response?.data.data
-
           if (formError) {
-            Object.keys(formError).forEach(key => {
+            Object.keys(formError).forEach((key) => {
               setError(key as keyof FormData, {
                 message: formError[key as keyof FormData],
                 type: 'Server'
@@ -60,44 +58,48 @@ export default function Login() {
 
   return (
     <div className='bg-orange'>
+      {/* <Helmet>
+        <title>Đăng nhập | Shopee Clone</title>
+        <meta name='description' content='Đăng nhập vào dự án Shopee Clone' />
+      </Helmet> */}
       <div className='container'>
-        <div className='grid grid-cols-1 lg:grid-cols-5 py-12 lg:py:32 lg:pr-10'>
+        <div className='grid grid-cols-1 py-12 lg:grid-cols-5 lg:py-32 lg:pr-10'>
           <div className='lg:col-span-2 lg:col-start-4'>
-            <form action='' className='p-10 rounded bg-white shadow-sm' onSubmit={onSubmit} noValidate>
-              <div className='text-2xl'>Login</div>
+            <form className='rounded bg-white p-10 shadow-sm' onSubmit={onSubmit} noValidate>
+              <div className='text-2xl'>Đăng nhập</div>
               <Input
                 name='email'
                 register={register}
                 type='email'
                 className='mt-8'
                 errorMessage={errors.email?.message}
+                placeholder='Email'
               />
               <Input
                 name='password'
                 register={register}
                 type='password'
-                className='mt-8'
+                className='mt-2'
+                // classNameEye='absolute right-[5px] h-5 w-5 cursor-pointer top-[12px]'
                 errorMessage={errors.password?.message}
                 placeholder='Password'
-            
+                autoComplete='on'
               />
               <div className='mt-3'>
-                <Button 
-                  type="submit" 
-                  className='w-full text-center py-4 uppercase bg-red-500 text-white text-sm flex justify-center items-center' 
-                  isLoading={logintMutatuin.isPending}
-                  disabled={logintMutatuin.isPending}
+                <Button
+                  type='submit'
+                  className='flex  w-full items-center justify-center bg-red-500 py-4 px-2 text-sm uppercase text-white hover:bg-red-600'
+                  // isLoading={loginMutation.isLoading}
+                  // disabled={loginMutation.isLoading}
                 >
-                  Đăng Nhập
+                  Đăng nhập
                 </Button>
               </div>
-              <div className='mt-8 '>
-                <div className='flex items-center text-center justify-center'>
-                  <span className='text-slate-400'>Bạn chưa có tài khoản</span>
-                  <Link className='text-red-400 ml-1' to={'/register'}>
-                    Đăng kí
-                  </Link>
-                </div>
+              <div className='mt-8 flex items-center justify-center'>
+                <span className='text-gray-400'>Bạn chưa có tài khoản?</span>
+                <Link className='ml-1 text-red-400' to='/register'>
+                  Đăng ký
+                </Link>
               </div>
             </form>
           </div>

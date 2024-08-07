@@ -16,7 +16,9 @@ export default function ProductList1() {
   const { data: productsData }: { data?: AxiosResponse<SuccesRessponse<ProductList>> } = useQuery({
     queryKey: ['products', queryConfig],
     queryFn: () => productApi.getProducts(queryConfig as ProductListConfig),
+
     staleTime: 3 * 60 * 1000,
+    // keepPreviousData: true,
   });
 
   const pageSize = productsData?.data?.data?.pagination?.page_size || 0;
@@ -33,10 +35,10 @@ export default function ProductList1() {
       <div className='container'>
         <div className='grid grid-cols-12 gap-6'>
           <div className='col-span-3'>
-            <AsideFilter queryConfig={queryConfig}  categories={categoriesData?.data.data||[]}/>
+            <AsideFilter queryConfig={queryConfig} categories={categoriesData?.data.data || []} />
           </div>
           <div className='col-span-9'>
-            <SortProductList queryConfig={queryConfig}  pageSize={pageSize}/>
+            <SortProductList queryConfig={queryConfig} pageSize={pageSize} />
             <div className='mt-6  grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3'>
               {productsData && productsData.data.data.products.map((product) => (
                 <div className='col-span-1' key={product._id}>
